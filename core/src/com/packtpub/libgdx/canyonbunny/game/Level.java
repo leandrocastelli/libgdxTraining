@@ -5,7 +5,10 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.packtpub.libgdx.canyonbunny.game.objects.AbstractGameObject;
+import com.packtpub.libgdx.canyonbunny.game.objects.BunnyHead;
 import com.packtpub.libgdx.canyonbunny.game.objects.Clouds;
+import com.packtpub.libgdx.canyonbunny.game.objects.Feather;
+import com.packtpub.libgdx.canyonbunny.game.objects.GoldCoin;
 import com.packtpub.libgdx.canyonbunny.game.objects.Mountains;
 import com.packtpub.libgdx.canyonbunny.game.objects.Rock;
 import com.packtpub.libgdx.canyonbunny.game.objects.WaterOverlay;
@@ -16,6 +19,9 @@ import com.packtpub.libgdx.canyonbunny.game.objects.WaterOverlay;
 public class Level {
     public static final String TAG = Level.class.getName();
 
+    public BunnyHead bunnyHead;
+    public Array<GoldCoin> goldCoins;
+    public Array<Feather> feathers;
     public enum BLOCK_TYPE {
         EMPTY(0, 0, 0), //black
         ROCK(0, 255, 0), //green
@@ -49,9 +55,12 @@ public class Level {
     }
 
     private void init(String filename) {
+        //player character
+        bunnyHead = null;
         //objects
         rocks = new Array<Rock>();
-
+        goldCoins = new Array<GoldCoin>();
+        feathers = new Array<Feather>();
         //Load image file that represents the level data
         Pixmap pixmap = new Pixmap(Gdx.files.internal(filename));
         // scan pixels from top-left to bottom-right
@@ -75,9 +84,9 @@ public class Level {
                 else if (BLOCK_TYPE.ROCK.sameColor(currentPixel)) {
                     if (lastPixel != currentPixel) {
                         obj = new Rock();
-                        float heighIncreaseFactor = 0.25f;
+                        float heighIncreaseFactor = 0.35f;
                         offsetHeight = -2.5f;
-                        obj.position.set(pixelX, baseHeight * obj.dimension.y * heighIncreaseFactor + offsetHeight);
+                        obj.position.set(pixelX - 1.0f, baseHeight * obj.dimension.y * heighIncreaseFactor + offsetHeight);
                         rocks.add((Rock)obj);
                     } else {
                         rocks.get(rocks.size -1).increaseLenght(1);
@@ -85,15 +94,25 @@ public class Level {
                 }
                 //player spawn point
                 else if (BLOCK_TYPE.PLAYER_SPAWPOINT.sameColor(currentPixel)) {
-
+                    obj = new BunnyHead();
+                    offsetHeight = -3f;
+                    obj.position.set(pixelX + 1.0f, baseHeight * obj.dimension.y + offsetHeight);
+                    bunnyHead = (BunnyHead) obj;
                 }
                 //feather
                 else if (BLOCK_TYPE.ITEM_FEATHER.sameColor(currentPixel)) {
+                    obj = new Feather();
+                    offsetHeight = -1.5f;
+                    obj.position.set(pixelX, baseHeight * obj.dimension.y + offsetHeight);
+                    feathers.add((Feather)obj);
 
                 }
                 //gold coind
                 else if (BLOCK_TYPE.ITEM_GOLD_COIN.sameColor(currentPixel)) {
-
+                    obj = new GoldCoin();
+                    offsetHeight = -1.5f;
+                    obj.position.set(pixelX, baseHeight*obj.dimension.y + offsetHeight);
+                    goldCoins.add((GoldCoin)obj);
                 }
                 // unknown object/pixel color
                 else {
@@ -126,12 +145,31 @@ public class Level {
         //Draw Rocks
         for (Rock rock : rocks)
             rock.render(batch);
+        //Draw Gold Coind
+        for (GoldCoin goldCoin : goldCoins)
+                goldCoin.render(batch);
+        //Draw Feathers
+        for (Feather feather : feathers)
+            feather.render(batch);
 
+        //Draw Player Character
+        bunnyHead.render(batch);
         //Draw Water Overlay
         waterOverlay.render(batch);
 
         //Draw Clouds
         clouds.render(batch);
 
+    }
+
+    public void update (float deltaTime) {
+        bunnyHead.update(deltaTime);
+        for (Rock rock : rocks)
+            rock.update(deltaTime);
+        for (GoldCoin goldCoin : goldCoins)
+            goldCoin.update(deltaTime);
+        for(Feather feather : feathers)
+            feather.update(deltaTime);
+        clouds.update(deltaTime);
     }
 }
