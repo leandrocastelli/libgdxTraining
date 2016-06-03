@@ -1,6 +1,7 @@
 package com.packtpub.libgdx.canyonbunny.game;
 
 import com.badlogic.gdx.Application;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
@@ -15,6 +16,7 @@ import com.packtpub.libgdx.canyonbunny.game.objects.BunnyHead;
 import com.packtpub.libgdx.canyonbunny.game.objects.Feather;
 import com.packtpub.libgdx.canyonbunny.game.objects.GoldCoin;
 import com.packtpub.libgdx.canyonbunny.game.objects.Rock;
+import com.packtpub.libgdx.canyonbunny.game.screens.MenuScreen;
 import com.packtpub.libgdx.canyonbunny.util.CameraHelper;
 import com.packtpub.libgdx.canyonbunny.util.Constants;
 
@@ -27,9 +29,28 @@ public class WorldController extends InputAdapter {
     public int lives;
     public int score;
 
+    private Game game;
+
+    private float timeLeftGameOverDelay;
+
     private Rectangle r1 = new Rectangle();
     private Rectangle r2 = new Rectangle();
 
+    public WorldController (Game game) {
+        this.game = game;
+        init();
+    }
+    public boolean isGameOver() {
+        return lives < 0;
+    }
+
+    private void backToMenu() {
+        //switch to menu screen
+        game.setScreen(new MenuScreen(game));
+    }
+    public boolean isPlayerInWater () {
+        return level.bunnyHead.position.y < -5;
+    }
     private void onCollisionBunnyHeadWithRock (Rock rock){
         BunnyHead bunnyHead = level.bunnyHead;
         float heightDifference = Math.abs(bunnyHead.position.y - ( rock.position.y + rock.bounds.height));
@@ -106,14 +127,12 @@ public class WorldController extends InputAdapter {
     }
 
     public CameraHelper cameraHelper;
-    public WorldController() {
-        init();
-    }
 
     private void init(){
         Gdx.input.setInputProcessor(this);
         cameraHelper = new CameraHelper();
         lives = Constants.LIVES_START;
+        timeLeftGameOverDelay = 0;
         initLevel();
     }
 
@@ -135,10 +154,22 @@ public class WorldController extends InputAdapter {
 
     public void update (float deltaTime) {
         handleDebugInput(deltaTime);
-        handleInputGame(deltaTime);
+        if (isGameOver()) {
+            timeLeftGameOverDelay -= deltaTime;
+            if (timeLeftGameOverDelay < 0 ) backToMenu();
+        } else {
+            handleInputGame(deltaTime);
+        }
         level.update(deltaTime);
         testCollisions();
         cameraHelper.update(deltaTime);
+        if (!isGameOver() && isPlayerInWater()) {
+            lives--;
+            if (isGameOver())
+                timeLeftGameOverDelay = Constants.TIME_DELAY_GAME_OVER;
+            else
+                initLevel();
+        }
     }
 
     private void handleDebugInput(float deltaTime) {
@@ -215,6 +246,8 @@ public class WorldController extends InputAdapter {
                     ? null: level.bunnyHead);
             Gdx.app.debug(TAG, "Camera follow enabled: "
                     + cameraHelper.hasTarget());
+        } else if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.BACK) {
+            backToMenu();
         }
         return false;
     }
