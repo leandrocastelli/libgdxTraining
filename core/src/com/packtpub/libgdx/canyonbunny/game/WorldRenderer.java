@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.utils.Disposable;
 import com.packtpub.libgdx.canyonbunny.util.Constants;
+import com.packtpub.libgdx.canyonbunny.util.GamePreferences;
 
 import javax.swing.GroupLayout;
 
@@ -109,7 +110,8 @@ public class WorldRenderer implements Disposable{
         renderGuiScore(batch);
         renderGuiFeatherPowerup(batch);
         renderGuiExtraLive(batch);
-        renderGuiFpsCounter(batch);
+        if (GamePreferences.instance.showFpsCounter)
+            renderGuiFpsCounter(batch);
         renderGuiGameOverMessage(batch);
         batch.end();
     }
